@@ -3,6 +3,7 @@ import io
 import json
 import re
 from pathlib import Path
+from typing import List, Dict
 from typing import Any
 
 from PIL import Image
@@ -109,7 +110,6 @@ def get_action_description(
 
     return action_str
 
-
 class RenderHelper(object):
     """Helper class to render text and image observations and meta data in the trajectory"""
 
@@ -140,6 +140,7 @@ class RenderHelper(object):
         action: Action,
         state_info: StateInfo,
         meta_data: dict[str, Any],
+        top_m_actions: List[Action],
         render_screenshot: bool = False,
     ) -> None:
         """Render the trajectory"""
@@ -165,15 +166,16 @@ class RenderHelper(object):
         # meta data
         new_content += f"<div class='prev_action' style='background-color:pink'>{meta_data['action_history'][-1]}</div>\n"
 
-        # action
-        action_str = get_render_action(
-            action,
-            info["observation_metadata"],
-            action_set_tag=self.action_set_tag,
-        )
-        # with yellow background
-        action_str = f"<div class='predict_action'>{action_str}</div>"
-        new_content += f"{action_str}\n"
+        # Render top m actions
+        new_content += "<div class='top_actions'>\n"
+        for i, top_action in enumerate(top_m_actions, 1):
+            action_str = get_render_action(
+                top_action,
+                info["observation_metadata"],
+                action_set_tag=self.action_set_tag
+            )
+            new_content += f"<div class='predict_action'><strong>Rank #{i} option:</strong> {action_str}</div>\n"
+        new_content += "</div>\n"
 
         # add new content
         self.render_file.seek(0)
